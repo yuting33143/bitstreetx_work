@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>倒數計時&API</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <main id="app">
+        <div class="wrapper none" @click="close_popup">
+            <div class="popup" @click.stop>
+                <div class="popup_content" >
+                    <div class="close" @click="close_popup">X</div>
+                    <h1>距離2023年02月28日</h1>
+                    <div class="countdown">{{countdown}}</div>
+                </div>
+            </div>
+        </div>
+        <button class="open" type="button" @click="open_popup">倒數計時按鈕</button>
+        <div class="data">
+            <div class="data_title">
+                <div class="item">交易對</div>
+                <div class="item">標記價格</div>
+                <div class="item">指數價格</div>
+                <div class="item">下次資金費率結算時間</div>
+            </div>
+            <div class="data_content" v-for="item in data">
+                <div class="item">{{ item.symbol }}</div>
+                <div class="item">{{ item.markPrice }}</div>
+                <div class="item">{{ item.indexPrice }}</div>
+                <div class="item">{{ item.nextFundingTime }}</div>
+            </div>
+        </div>
+        <canvas id="chart"></canvas>
+    </main>
+    <script src="vendors/vue/vue.global.prod.js"></script>
+    <script src="vendors/Jquery/jquery-3.6.1.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
+    <script>
+        const app = Vue.createApp({
+            data(){
+                return{
+                    d_final : new Date(2023, 2, 0, 0, 0, 0),
+                    countdown : '',
+                    // show_popup:false,
+                    data:""
+                }
+            },
+            mounted(){
+                this.get_countdown();
+                setInterval(()=>{
+                // console.log(this);
+                this.get_countdown();
+                },1000);
+                this.ajax();
+            },
+            methods:{
+                date_diff(date1_obj, date2_obj) {
+                    let diff_seconds = Math.floor(Math.abs(date1_obj.getTime() - date2_obj.getTime()) / 1000);
+                    let days = Math.floor(diff_seconds / 60 / 60 / 24);
+                    let hours = Math.floor((diff_seconds - (days * 86400)) / 60 / 60);
+                    let minutes = Math.floor((diff_seconds - (days * 86400) - (hours * 3600)) / 60);
+                    let seconds = diff_seconds - (days * 86400) - (hours * 3600) - (minutes * 60);
+
+                    return `倒數 ${days} 天 ${hours} 小時 ${minutes} 分鐘 ${seconds} 秒`;
+                },
+                get_countdown(){
+                    // console.log(this);
+                    let d = new Date();
+                    this.countdown = this.date_diff(d, this.d_final);
+                },
+                open_popup(){
+                    this.show_popup = true;
+                    document.querySelector('.wrapper').classList.remove('none');
+                    document.querySelector("body").style.overflow = "hidden";
+                },
+                close_popup(){
+                    this.show_popup = false;
+                    document.querySelector('.wrapper').classList.add('none');
+                    document.querySelector("body").style.overflow = "auto";
+                },
+                ajax(){
+                    $.ajax({
+                        method: "GET",
+                        url: "https://testnet.binancefuture.com/dapi/v1/premiumIndex",
+                        data: {},
+                        dataType: "json",
+                        success: (response) => {
+                        console.log(response);
+                        this.data = response;
+                        this.chart();
+                        },
+                        error: function (exception) {
+                            alert("發生錯誤: " + exception.status);
+                        }
+                    });
+                },
+                chart() {
+                    let labels = this.data.map(item => item.symbol);
+                    let markPrices = this.data.map(item => item.markPrice);
+                    let indexPrices = this.data.map(item => item.indexPrice);
+                    let fundingTimes = this.data.map(item => item.nextFundingTime);
+
+                    let ctx = document.getElementById('chart').getContext('2d');
+                    let chart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [
+                                {
+                                    label: '標記價格',
+                                    data: markPrices,
+                                    type: 'line',
+                                    fill: false,
+                                    borderColor: 'rgb(75, 192, 192)',
+                                    tension: 0.1
+                                },
+                                {
+                                    label: '指數價格',
+                                    data: indexPrices,
+                                    type: 'line',
+                                    fill: false,
+                                    borderColor: 'rgb(255, 99, 132)',
+                                    tension: 0.1
+                                },
+                                {
+                                    label: '下次資金費率結算時間',
+                                    data: fundingTimes,
+                                    type: 'bar',
+                                    backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                                    borderColor: 'rgba(255, 159, 64, 1)'
+                                }
+                            ]
+                        },
+                        options: {
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        }).mount("#app");
+
+    </script>
+</body>
+</html>
