@@ -35,18 +35,17 @@
         </div>
         <canvas id="chart"></canvas>
     </main>
-    <script src="vendors/vue/vue.global.prod.js"></script>
-    <script src="vendors/Jquery/jquery-3.6.1.js"></script>
+    <script src="https://unpkg.com/vue@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
     <script>
-        const app = Vue.createApp({
-            data(){
-                return{
-                    d_final : new Date(2023, 2, 0, 0, 0, 0),
-                    countdown : '',
-                    // show_popup:false,
-                    data:""
-                }
+        const app = new Vue({
+            el: '#app',
+            data:{
+                d_final : new Date(2023, 2, 0, 0, 0, 0),
+                countdown : '',
+                // show_popup:false,
+                data:""
             },
             mounted(){
                 this.get_countdown();
@@ -88,9 +87,9 @@
                         data: {},
                         dataType: "json",
                         success: (response) => {
-                        console.log(response);
-                        this.data = response;
-                        this.chart();
+                            // console.log(response);
+                            this.data = response;
+                            this.chart();
                         },
                         error: function (exception) {
                             alert("發生錯誤: " + exception.status);
@@ -125,13 +124,6 @@
                                     borderColor: 'rgb(255, 99, 132)',
                                     tension: 0.1
                                 },
-                                {
-                                    label: '下次資金費率結算時間',
-                                    data: fundingTimes,
-                                    type: 'bar',
-                                    backgroundColor: 'rgba(255, 159, 64, 0.2)',
-                                    borderColor: 'rgba(255, 159, 64, 1)'
-                                }
                             ]
                         },
                         options: {
@@ -144,7 +136,7 @@
                     });
                 }
             }
-        }).mount("#app");
+        });
 
     </script>
 </body>
